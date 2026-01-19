@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin Toma Puta Team</title>
+    <style>
+        /* =========================================
+           1. VARIÁVEIS GLOBAIS (DESIGN SYSTEM)
+           ========================================= */
+        :root {
+            /* --- PALETA DE INTERFACE (UI) --- */
+            --hu-bg: #151b24;       /* Fundo Lado Heads-Up */
+            --hu-btn: #2b3a4a;      /* Botão Heads-Up */
+            --hu-btn-h: #3e5266;    /* Hover Heads-Up */
+            
+            --3h-bg: #111f18;       /* Fundo Lado 3-Handed */
+            --3h-btn: #1e3a2a;      /* Botão 3-Handed */
+            --3h-btn-h: #2f5740;    /* Hover 3-Handed */
+
+            --bg-dark: #0a0a0a;     /* Fundo Geral (Deep Focus) */
+            --text: #e0e0e0;        /* Texto Principal */
+            --danger: #cf6679;      /* Cor de Alerta/Voltar */
+
+            /* --- MASTER PALETTE (CORES DOS RANGES) --- 
+               Sincronizado com o Range Painter Team Edition */
+            .l-open_shove { background-color: #00E676; } /* Verde Neon (All-in) */
+            .l-trap       { background-color: #827717; } /* Olive (Armadilha) */
+            .l-sizes      { background-color: #FF4081; } /* Rosa (Sizes Especiais) */
+            .l-raise_ai   { background-color: #2979FF; } /* Azul Royal (Agressão Forte) */
+            .l-raise_call { background-color: #00E5FF; } /* Ciano (Controle/Valor) */
+            .l-raise_spec { background-color: #8E44AD; } /* Roxo (Especulativo/Misto) */
+            .l-raise_fold { background-color: #B03A2E; } /* Bordô (Blefe/Desistência) */
+            .l-call_strong { background-color: #FF9800; } /* Laranja (Call Forte) */
+            .l-limp_call  { background-color: #FFC107; } /* Ouro (Passivo/Limp) */
+            .l-check_weak { background-color: #FFEB3B; } /* Amarelo (Check/Fold) */
+            .l-hu-bg       { background-color: #151b24; border: 1px solid #555; }
+            .l-salmon      { background-color: #FF8A80; color: #000; } /* Salmão (Raise/Fold) */
+            .l-grey        { background-color: #BDBDBD; color: #000; } /* Cinza (Limp/Call/Call) */
+            .l-white       { background-color: #FFFFFF; border: 1px solid #999; color: #000; } /* Branco (Nash) */
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            margin: 0;
+            overflow: hidden; /* Evita barras de rolagem na tela principal */
+        }
+
+        /* =========================================
+           2. MENU PRINCIPAL (SPLIT SCREEN)
+           ========================================= */
+        #main-menu {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Colunas Esquerda (HU) e Direita (3H) */
+        .section-hu, .section-3h {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto; /* Permite rolar se houver muitos botões */
+        }
+
+        .section-hu { background-color: var(--hu-bg); border-right: 2px solid #000; }
+        .section-3h { background-color: var(--3h-bg); }
+
+        /* Estilização dos Títulos de Seção */
+        h2 { 
+            margin: 10px 0 15px 0; 
+            text-transform: uppercase; 
+            opacity: 0.6; 
+            font-size: 1.1rem; 
+            text-align: center; 
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 10px;
+        }
+        
+        /* Agrupadores de Botões */
+        .btn-group {
+            background: rgba(0,0,0,0.25);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .group-title {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        /* Botões de Ação (Menu) */
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            transition: transform 0.1s;
+            font-size: 1.2rem;
+        }
+        
+        .action-btn:active { transform: scale(0.98); }
+        
+        /* Cores Específicas por Lado */
+        .btn-hu { background-color: var(--hu-btn); }
+        .btn-hu:hover { background-color: var(--hu-btn-h); }
+        .btn-3h { background-color: var(--3h-btn); }
+        .btn-3h:hover { background-color: var(--3h-btn-h); }
+        
+        .nash-highlight { border: 1px solid rgba(255,255,255,0.2); }
+        .tag { font-size: 0.8em; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; }
+
+        /* =========================================
+           3. CHART WALL (MODAL DE VISUALIZAÇÃO)
+           ========================================= */
+        #chart-wall {
+            display: none; /* Oculto por padrão */
+            height: 100vh;
+            flex-direction: column;
+            background-color: #121212;
+            position: fixed;
+            top: 0; left: 0; width: 100%; z-index: 1000;
+        }
+
+        /* Barra Superior (Navegação) */
+        .top-bar {
+            padding: 10px 20px;
+            background: #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Botões de Atalho de Stack (UI Aprimorada) */
+        .stack-shortcuts-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .stack-shortcut-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 8px 20px;       /* Área de clique generosa */
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 800;        /* Negrito forte */
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .stack-shortcut-btn:hover {
+            background-color: #fff;  /* Inversão de cor */
+            color: #000;
+            border-color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .back-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* Container das Imagens (Grid) */
+        .charts-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 30px;
+            justify-content: center; 
+            align-content: flex-start;
+            scroll-behavior: smooth;
+        }
+
+        /* Cartão Individual da Imagem */
+        .chart-card {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            scroll-margin-top: 20px;
+        }
+        
+        .chart-title { color: #aaa; font-size: 1.2rem; margin-bottom: 8px; font-weight: bold; }
+        
+        /* A Imagem do Range */
+        .chart-img {
+            display: block;
+            max-width: 500px; /* Tamanho de Ouro: Bom para leitura, bom para grid */
+            width: 100%;
+            height: auto;
+            border: 1px solid #222;
+        }
+        
+        /* Placeholder de Erro 404 */
+        .img-placeholder {
+            width: 450px;
+            height: 450px;
+            max-width: 90vw;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            color: #555;
+            border: 2px dashed #333;
+        }
+
+        /* =========================================
+           4. LEGENDA (RODAPÉ)
+           ========================================= */
+        .fixed-legend {
+            background: #1a1a1a;
+            padding: 15px 20px;
+            border-top: 3px solid #333;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+        }
+
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #eee;
+            background-color: rgba(0,0,0,0.4); /* Fundo tipo "Pílula" */
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .legend-item span { 
+            display: inline-block; 
+            width: 20px; height: 20px; 
+            margin-right: 10px; 
+            border-radius: 4px; 
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            #main-menu { flex-direction: column; }
+            .section-hu { border-right: none; border-bottom: 2px solid #000; }
+            .chart-img { max-width: 95vw; }
+            .top-bar { flex-direction: column; align-items: stretch; }
+            .stack-shortcuts-container { margin: 10px 0; }
+            .back-btn { width: 100%; }
+        }
+
+        /* Temas Dinâmicos (Muda a cor do fundo dependendo se é HU ou 3H) */
+        #chart-wall.mode-hu { background-color: var(--hu-bg); }
+        #chart-wall.mode-3h { background-color: var(--3h-bg); }
+
+        /* --- ESTILO DAS IMAGENS FIXAS NO MENU --- */
+        .menu-static-img {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 5px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .menu-static-img img {
+            width: 100%;       /* Ocupa toda a largura da coluna */
+            height: auto;      /* Mantém a proporção */
+            display: block;
+            border: 1px solid #000;
+        }
+
+        .menu-static-img small {
+            display: block;
+            color: #888;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-menu">
+        
+        <div class="section-hu">
+            <h2>Heads-Up (HU)</h2>
+            <div class="btn-group">
+                <span class="group-title">Nash Strategy</span>
+                <button class="action-btn btn-hu nash-highlight" onclick="showCharts('HU NASH Strategy', 'hu_nash')">HU NASH</button>
+            </div>
+            <div class="btn-group">
+                <span class="group-title">Small Blind (Hero)</span>
+                <button class="action-btn btn-hu" onclick="showCharts('HU SB Open', 'hu_sb_open')">SB Open</button>
+            </div>
+            <div class="btn-group">
+                <span class="group-title">Big Blind (Hero)</span>
+                <button class="action-btn btn-hu" onclick="showCharts('HU BB vs Min-Raise', 'hu_bb_vs_mr')">vs MR</button>
+                <button class="action-btn btn-hu" onclick="showCharts('HU BB vs Limp', 'hu_bb_vs_limp')">vs Limp</button>
+                <button class="action-btn btn-hu" onclick="showCharts('HU BB vs Shove', 'hu_bb_vs_shove')">vs Shove</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <span class="group-title" style="text-align: center; color: #aaa;">LATE GAME (30/60)</span>
+                
+                <div class="menu-static-img">
+                    <small>SB PUSH (30/60)</small>
+                    <img src="./assets/ranges/nash/hu_sb_push_30.png" alt="Nash SB Push 30/60"
+                         onerror="this.style.display='none'; this.parentNode.innerHTML='<small>⚠️ Falta: hu_sb_push_30.png</small>'">
+                </div>
+
+                <div class="menu-static-img">
+                    <small>BB CALL (30/60)</small>
+                    <img src="./assets/ranges/nash/hu_bb_call_30.png" alt="Nash BB Call 30/60"
+                         onerror="this.style.display='none'; this.parentNode.innerHTML='<small>⚠️ Falta: hu_bb_call_30.png</small>'">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-3h">
+            <h2>3-Handed (3H)</h2>
+            <div class="btn-group">
+                <span class="group-title">Nash Strategy</span>
+                <button class="action-btn btn-3h nash-highlight" onclick="showCharts('3H NASH Strategy', '3h_nash')">3H NASH</button>
+            </div>
+            <div class="btn-group">
+                <span class="group-title">Button (Hero)</span>
+                <button class="action-btn btn-3h" onclick="showCharts('3H BTN Open', '3h_btn_open')">Open Raise</button>
+            </div>
+            <div class="btn-group">
+                <span class="group-title">Small Blind (Hero)</span>
+                <button class="action-btn btn-3h" onclick="showCharts('3H SB Open (BTN Fold)', '3h_sb_open')">Open <span class="tag">BTN Fold</span></button>
+                
+                <button class="action-btn btn-3h" onclick="showCharts('3H SB vs BTN Limp', '3h_sb_vs_btn_limp')">vs Limp</button>
+                
+                <button class="action-btn btn-3h" onclick="showCharts('3H SB vs BTN MR', '3h_sb_vs_btn_mr')">vs MR</button>
+                <button class="action-btn btn-3h" onclick="showCharts('3H SB vs BTN Shove', '3h_sb_vs_btn_shove')">vs Shove</button>
+            </div>
+            <div class="btn-group">
+                <span class="group-title">Big Blind (Hero)</span>
+                
+                <small style="color:#aaa; display:block; margin-bottom:5px; margin-top:5px; font-size:0.75rem;">vs SB (BTN Fold):</small>
+                <div style="display:flex; gap:5px; margin-bottom:15px;">
+                    <button class="action-btn btn-3h" style="flex:1;" onclick="showCharts('3H BB vs SB Limp', '3h_bb_vs_sb_limp')">vs Limp</button>
+                    <button class="action-btn btn-3h" style="flex:1;" onclick="showCharts('3H BB vs SB MR', '3h_bb_vs_sb_mr')">vs MR</button>
+                    <button class="action-btn btn-3h" style="flex:1;" onclick="showCharts('3H BB vs SB Shove', '3h_bb_vs_sb_shove')">vs Shove</button>
+                </div>
+
+                <small style="color:#aaa; display:block; margin-bottom:5px; font-size:0.75rem;">vs BTN (Reação ao SB):</small>
+                
+                <button class="action-btn btn-3h" onclick="showCharts('3H BB vs BTN Limp', '3h_bb_vs_btn_limp')">vs BTN Limp</button>
+
+                <button class="action-btn btn-3h" onclick="showCharts('3H BB vs BTN MR (SB Fold)', '3h_bb_vs_btn_mr_sbfold')">vs BTN MR <span class="tag">SB Fold</span></button>
+                <button class="action-btn btn-3h" onclick="showCharts('3H BB vs BTN MR (SB Call)', '3h_bb_vs_btn_mr_sbcall')">vs BTN MR <span class="tag">SB Call</span></button>
+                <button class="action-btn btn-3h" onclick="showCharts('3H BB vs BTN MR (SB Shove)', '3h_bb_vs_btn_mr_sbshove')">vs BTN MR <span class="tag">SB Shove</span></button>
+                
+                <button class="action-btn btn-3h" style="margin-top: 10px;" onclick="showCharts('3H BB vs BTN Shove', '3h_bb_vs_btn_shove')">vs BTN Shove</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-wall">
+        <div class="top-bar">
+            <h3 id="current-situation-title" style="margin:0; color: #fff;">Situação</h3>
+            <div id="stack-shortcuts" class="stack-shortcuts-container"></div>
+            <button class="back-btn" onclick="resetMenu()">VOLTAR (ESC)</button>
+        </div>
+        
+        <div class="charts-container" id="gallery"></div>
+        
+        <div class="fixed-legend"></div>
+    </div>
+
+    <script>
+        // 1. CONFIGURAÇÃO GERAL
+        // Lista padrão de todos os stacks possíveis
+        const allStacks = ["25bb", "20bb", "17bb", "15bb", "12bb", "10bb", "8bb"];
+
+        // 2. Configuração de Exceções (Quais botões mostram stacks específicos?)
+        const stackConfig = {
+            "3h_sb_vs_btn_limp": ["25bb", "15bb"],
+            "3h_sb_vs_btn_mr": ["25bb", "17bb", "15bb", "12bb", "10bb"],
+            "3h_bb_vs_btn_limp": ["25bb", "15bb"],
+            "3h_bb_vs_btn_mr_sbfold": ["25bb", "20bb", "17bb", "15bb", "12bb", "10bb"],
+            "3h_bb_vs_btn_mr_sbcall": ["25bb", "20bb", "17bb", "15bb", "12bb", "10bb"],
+            "3h_bb_vs_btn_mr_sbshove": ["25bb", "20bb", "17bb", "15bb", "12bb", "10bb"],
+            "3h_bb_vs_btn_shove": ["20bb", "17bb", "15bb", "12bb", "10bb", "8bb"],
+            "hu_bb_vs_mr": ["20bb", "17bb", "15bb", "12bb", "10bb", "8bb"]
+            
+        };
+        
+        // 3. DICIONÁRIO DE LEGENDAS (CORES E SIGNIFICADOS)
+        // Mapeia o ID do botão para um conjunto específico de instruções.
+        // 3. DICIONÁRIO DE LEGENDAS (CORES E SIGNIFICADOS)
+        const legendMapping = {
+            // Nova Legenda: SB vs BTN MR (Resteal)
+            "3h_sb_vs_btn_mr": [
+                { label: "All in", color: "l-open_shove" },               // Verde
+                { label: "3bet Non-AI / Shove", color: "l-raise_call" },  // Ciano
+                { label: "3bet Non-AI / Fold", color: "l-raise_fold" }    // Vermelho
+            ],
+            // HU BB vs MR (Estratégia Simplificada)
+            "hu_bb_vs_mr": [
+                { label: "Shove (All-in)", color: "l-open_shove" },  // Verde
+                { label: "Raise Non-AI", color: "l-raise_ai" },      // Azul Royal
+                { label: "Call", color: "l-check_weak" }             // Amarelo
+            ],
+            // HU SB Open (vs Fish Strategy)
+            "hu_sb_open": [
+                { label: "Raise / Shove / Call", color: "l-raise_ai" },      // Azul Escuro
+                { label: "Raise / Call / Call", color: "l-raise_call" },     // Ciano
+                { label: "Raise / Call / Fold", color: "l-raise_spec" },     // Roxo
+                { label: "Open Shove", color: "l-open_shove" },              // Verde
+                { label: "Raise / Fold", color: "l-salmon" },                // Salmão (NOVO)
+                { label: "Limp / Shove / Call", color: "l-trap" },           // Olive
+                { label: "Limp / Call / Call", color: "l-grey" },            // Cinza (NOVO)
+                { label: "Limp / Call / Fold", color: "l-call_strong" },     // Laranja
+                { label: "Limp / Fold", color: "l-check_weak" }              // Amarelo
+            ],
+            // HU BB vs Shove
+            "hu_bb_vs_shove": [
+                { label: "Call Shove", color: "l-raise_ai" } // Azul Royal
+            ],
+            // HU BB vs Limp
+            "hu_bb_vs_limp": [
+                { label: "ISO Non-AI / Shove", color: "l-raise_ai" },    // Azul (Raise não All-in e paga Shove)
+                { label: "ISO All-in", color: "l-open_shove" },          // Verde
+                { label: "ISO Non-AI / Fold", color: "l-raise_fold" },   // Vermelho (Raise não All-in e folda p/ Shove)
+                { label: "Check", color: "l-check_weak" }                // Amarelo
+            ],
+            // LEGENDA ESPECIAL: NASH EQUILIBRIUM 
+            "nash": [
+                { label: "19bb+ (Sempre)", color: "l-hu-bg" },                  // Preto/Cinza
+                { label: "Número = Stack Máximo", color: "l-raise_call" },      // Ciano
+                { label: "Vazio = Fold", color: "l-white" }                // Branco
+            ],
+
+            // BB vs BTN MR (SB Shove)
+            "3h_bb_vs_btn_mr_sbshove": [
+                { label: "Call Shove", color: "l-raise_ai" } // Azul Royal
+            ],
+            // BB vs BTN MR (SB Call)
+            "3h_bb_vs_btn_mr_sbcall": [
+                { label: "All in", color: "l-open_shove" },              // Verde
+                { label: "3bet Non-AI / Shove", color: "l-raise_ai" },   // Azul Royal
+                { label: "Call", color: "l-check_weak" }                 // Amarelo
+            ],
+            // BB vs BTN MR (SB Fold)
+            "3h_bb_vs_btn_mr_sbfold": [
+                { label: "All in", color: "l-open_shove" },              // Verde
+                { label: "3bet Non-AI / Shove", color: "l-raise_call" }, // Ciano
+                { label: "Call", color: "l-check_weak" }                 // Amarelo
+            ],
+            // BB vs SB Shove (3-Handed)
+            "3h_bb_vs_sb_shove": [
+                { label: "Call Shove (Padrão)", color: "l-raise_ai" },           // Azul Royal
+                { label: "Call vs Aggro (Bottom Range)", color: "l-raise_call" } // Ciano
+            ],
+            // BB vs BTN Limp
+            "3h_bb_vs_btn_limp": [
+                { label: "All in", color: "l-open_shove" },      // Verde
+                { label: "Half Stack", color: "l-sizes" },       // Rosa
+                { label: "ISO 4x", color: "l-raise_ai" },        // Azul Royal
+                { label: "Check", color: "l-check_weak" }        // Amarelo
+            ],
+            // BB vs SB Limp (ISO Strategy)
+            "3h_bb_vs_sb_limp": [
+                { label: "All In", color: "l-open_shove" },              // Verde
+                { label: "ISO Non-AI / Shove", color: "l-raise_ai" },    // Azul Royal
+                { label: "ISO Non-AI / Fold", color: "l-raise_fold" },   // Vermelho
+                { label: "Check", color: "l-check_weak" }                // Amarelo
+            ],
+            // BB vs SB MR (3-Handed)
+            "3h_bb_vs_sb_mr": [
+                { label: "3bet Non-AI", color: "l-raise_ai" },                // Azul Escuro
+                { label: "3bet All-in", color: "l-open_shove" },              // Verde
+                { label: "Call", color: "l-check_weak" },                     // Amarelo
+                { label: "Call vs 2x (Fold vs >2x)", color: "l-raise_call" }  // Ciano
+            ],
+            // Nova Legenda: SB vs BTN Shove (Apenas Call)
+            "3h_sb_vs_btn_shove": [
+                { label: "Call", color: "l-raise_ai" } // Azul Royal
+            ],
+            "3h_sb_open": [
+                { label: "Open Shove", color: "l-open_shove" },           // Verde
+                { label: "Raise/Shove/Call", color: "l-raise_call" },     // Ciano
+                { label: "Raise/Call/Fold", color: "l-raise_spec" },      // Roxo
+                { label: "Raise/Fold", color: "l-raise_fold" },           // Vermelho
+                { label: "Limp/Shove/Call", color: "l-trap" },            // Olive
+                { label: "Limp/Call/Call", color: "l-limp_call" },        // Ouro
+                { label: "Limp/Call/Fold", color: "l-call_strong" },      // Laranja
+                { label: "Limp/Fold", color: "l-check_weak" }             // Amarelo
+            ],
+            // Legenda para BTN Open
+            "3h_btn_open": [
+                { label: "All in", color: "l-open_shove" },
+                { label: "MR (Call vs 3bet)", color: "l-raise_call" },
+                { label: "MR (All in vs 3bet)", color: "l-raise_ai" },
+                { label: "MR (Call vs 3b non-AI / Fold vs AI)", color: "l-raise_spec" },
+                { label: "MR (Fold vs 3bet)", color: "l-raise_fold" }
+            ],
+            // Legenda específica para SB vs Limp
+            "3h_sb_vs_btn_limp": [
+                { label: "All in", color: "l-open_shove" },    
+                { label: "Half Stack", color: "l-sizes" },     
+                { label: "3.5x", color: "l-raise_ai" },        
+                { label: "Limp/Shove", color: "l-trap" },      
+                { label: "Limp/Fold", color: "l-check_weak" }  
+            ],
+            // BB vs BTN Shove
+            "3h_bb_vs_btn_shove": [
+                { label: "Call vs BTN + SB (Multiway)", color: "l-raise_ai" },  // Azul Royal
+                { label: "Call vs BTN (SB Fold)", color: "l-sizes" }            // Rosa (CORRIGIDO PARA SIZES/ROSA)
+            ],
+            // Categorias Genéricas (Fallback)
+            "open_generic": [
+                { label: "All-in (S)", color: "l-open_shove" },
+                { label: "Raise/MR", color: "l-raise_ai" },
+                { label: "Limp/Call", color: "l-limp_call" },
+                { label: "Fold", color: "l-raise_fold" }
+            ],
+            "bb_defense": [
+                { label: "Shove", color: "l-open_shove" },
+                { label: "Call vs AI", color: "l-call_strong" },
+                { label: "Trap (Limp/Shove)", color: "l-trap" },
+                { label: "Fold", color: "l-check_weak" }
+            ],
+            "default": [
+                { label: "Shove", color: "l-open_shove" },
+                { label: "Raise", color: "l-raise_ai" },
+                { label: "Call", color: "l-limp_call" },
+                { label: "Fold", color: "l-raise_fold" }
+            ]
+        };
+
+        // --- ENGINE PRINCIPAL: showCharts ---
+        // Esta função é chamada ao clicar em qualquer botão do menu.
+        // --- FUNÇÃO PRINCIPAL (ENGINE) ---
+        function showCharts(title, slug) {
+            const menu = document.getElementById('main-menu');
+            const wall = document.getElementById('chart-wall');
+            const gallery = document.getElementById('gallery');
+            const titleEl = document.getElementById('current-situation-title');
+            const shortcutsContainer = document.getElementById('stack-shortcuts');
+
+            // Configuração Visual Básica
+            const isHu = slug.startsWith('hu_');
+            wall.className = isHu ? 'mode-hu' : 'mode-3h';
+            menu.style.display = 'none';
+            wall.style.display = 'flex';
+            titleEl.innerText = title;
+            gallery.innerHTML = '';
+            shortcutsContainer.innerHTML = ''; 
+
+            // --- LÓGICA ESPECIAL PARA NASH ---
+if (slug.includes('nash')) {
+                // Define manualmente quais imagens mostrar para o Nash
+                const nashImages = isHu ? [
+                    // --- HU NASH (6 Imagens: 3 Níveis de Blind) ---
+                    { name: "SB Push (15/30)", file: "hu_sb_push_15.png" },
+                    { name: "BB Call (15/30)", file: "hu_bb_call_15.png" },
+                    
+                    { name: "SB Push (20/40)", file: "hu_sb_push_20.png" },
+                    { name: "BB Call (20/40)", file: "hu_bb_call_20.png" },
+                    
+                    { name: "SB Push (30/60)", file: "hu_sb_push_30.png" },
+                    { name: "BB Call (30/60)", file: "hu_bb_call_30.png" }
+                ] : [
+                    // --- 3H NASH (Mantido igual) ---
+                    { name: "BTN Push", file: "3h_btn_push.png" },
+                    { name: "SB vs BTN (Push)", file: "3h_sb_vs_btn.png" },
+                    { name: "SB Push (3-Way)", file: "3h_sb_push.png" },
+                    { name: "BB vs BTN (Call)", file: "3h_bb_vs_btn_call.png" },
+                    { name: "BB vs SB (Call)", file: "3h_bb_vs_sb_call.png" },
+                    { name: "BB vs BTN + SB (Call)", file: "3h_bb_vs_btn_sb_call.png" }
+                ];
+
+                // Gera os cartões do Nash
+                nashImages.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'chart-card';
+                    // Caminho especial para a pasta 'nash'
+                    const imgSrc = `./assets/ranges/nash/${item.file}`;
+
+                    card.innerHTML = `
+                        <span class="chart-title">${item.name}</span>
+                        <img src="${imgSrc}" class="chart-img" alt="${item.name}" 
+                             onload="this.style.display='block'" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                        <div class="img-placeholder">
+                            <span style="display:block; font-size:2rem; margin-bottom:10px;">⚠️</span>
+                            Falta: <strong>${item.file}</strong><br>na pasta /nash/
+                        </div>
+                    `;
+                    gallery.appendChild(card);
+                });
+
+                updateLegend("nash"); // Força a legenda do Nash
+                return; // Encerra a função aqui para não rodar a lógica dos stacks normais
+            }
+
+            // --- LÓGICA PADRÃO (STACKS) ---
+            // (O código antigo continua aqui para todo o resto)
+            const typeFolder = isHu ? 'hu' : '3h';
+            const fileName = slug.substring(slug.indexOf('_') + 1);
+            const activeStacks = stackConfig[slug] || allStacks;
+
+            activeStacks.forEach(stack => {
+                const stackId = `stack-${stack}`;
+                
+                // Botão de Atalho
+                const shortcutBtn = document.createElement('button');
+                shortcutBtn.className = 'stack-shortcut-btn';
+                shortcutBtn.innerText = stack;
+                shortcutBtn.onclick = () => scrollToStack(stackId);
+                shortcutsContainer.appendChild(shortcutBtn);
+
+                // Cartão
+                const card = document.createElement('div');
+                card.className = 'chart-card';
+                card.id = stackId;
+                
+                const imgSrc = `./assets/ranges/${typeFolder}/${stack}/${fileName}.png`;
+
+                card.innerHTML = `
+                    <span class="chart-title">${stack}</span>
+                    <img src="${imgSrc}" class="chart-img" alt="${title}" 
+                        onload="this.style.display='block'" 
+                        onerror="handleImgError(this, '${fileName}', '${stack}')">
+                    <div class="img-placeholder">
+                        <span style="display:block; font-size:2rem; margin-bottom:10px;">⚠️</span>
+                        Falta: <strong>${fileName}.png</strong><br>em ${stack}
+                    </div>
+                `;
+                gallery.appendChild(card);
+            });
+
+            updateLegend(slug);
+        }
+
+        // Função para rolagem suave até o stack selecionado
+        function scrollToStack(stackId) {
+            const targetElement = document.getElementById(stackId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center', 
+                    inline: 'center' 
+                });
+            }
+        }
+
+        // Função auxiliar para tratar erros de imagem (404)
+        function handleImgError(img, fileName, stack) {
+            img.style.display = 'none'; // Esconde a imagem quebrada
+            img.nextElementSibling.style.display = 'flex'; // Mostra o placeholder de aviso
+        }
+
+        // Função para escolher a legenda correta
+        function updateLegend(slug) {
+            const container = document.querySelector('.fixed-legend');
+            container.innerHTML = ''; // Limpa legendas anteriores
+            
+            let key = "default";
+            
+            // Lógica de Prioridade:
+            // 1. Existe uma legenda exata para este botão?
+            if (legendMapping[slug]) {
+                key = slug;
+            } 
+            // 2. É uma tabela NASH?
+            else if (slug.includes('nash')) {
+                key = "nash";
+            } 
+            // 3. É uma jogada de Open?
+            else if (slug.includes('open')) {
+                key = "open_generic";
+            } 
+            // 4. É uma defesa de Big Blind?
+            else if (slug.includes('bb_vs')) {
+                key = "bb_defense";
+            }
+
+            // Garante que não quebra se a chave não for encontrada
+            const legendItems = legendMapping[key] || legendMapping["default"];
+
+            // Renderiza as "pílulas" da legenda
+            legendItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'legend-item';
+                div.innerHTML = `<span class="${item.color}"></span>${item.label}`;
+                container.appendChild(div);
+            });
+        }
+
+        // Função para voltar ao Menu Principal
+        function resetMenu() {
+            document.getElementById('chart-wall').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
+
+        // Atalho de Teclado: Tecla ESC volta ao menu
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") resetMenu(); });
+    </script>
+</body>
+</html>

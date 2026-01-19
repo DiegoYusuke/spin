@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Range Painter - Spin Pilot (Team Standard)</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body { 
+            background-color: #0a0a0a; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            user-select: none; 
+        }
+        
+        /* CONTROLES E PALETA */
+        .controls-container {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .palette-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .divider { width: 1px; height: 30px; background: #444; margin: 0 5px; }
+
+        .color-btn { 
+            width: 42px; 
+            height: 42px; 
+            border: 2px solid #333; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: transform 0.1s, box-shadow 0.2s; 
+            position: relative;
+        }
+        
+        .color-btn:hover { transform: scale(1.1); border-color: #777; z-index: 2; }
+        .color-btn.active { 
+            border-color: white; 
+            transform: scale(1.15); 
+            box-shadow: 0 0 12px rgba(255,255,255,0.4); 
+            z-index: 10; 
+        }
+        
+        /* Labels de Grupo */
+        .group-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: -5px;
+            margin-top: 5px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .action-btn { padding: 8px 15px; background: #333; color: white; border: 1px solid #444; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        .action-btn:hover { background: #555; }
+        .action-btn:active { background: #222; }
+        
+        /* Botão de Download Destaque */
+        .download-btn { background: #2979FF; border-color: #2979FF; }
+        .download-btn:hover { background: #448AFF; }
+
+        /* A GRADE */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(13, 1fr); 
+            gap: 2px; 
+            background: #000; 
+            border: 4px solid #333; 
+            padding: 4px; 
+            border-radius: 4px;
+        }
+
+        .cell {
+            width: 45px; height: 45px; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 13px; font-weight: 500; color: #666; 
+            cursor: crosshair;
+            background-color: #151515; 
+            transition: background 0.05s; 
+        }
+        
+        .cell:hover { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3); }
+
+        /* --- PALETA DE CORES DEFINITIVA (Team Culture) --- */
+        
+        /* 1. Shoves (VERDE) */
+        .bg-open_shove { background-color: #00E676 !important; color: #003300 !important; font-weight: bold; } /* Verde Neon */
+        
+        /* 2. Passivo / Calls (AMARELOS) */
+        .bg-check_weak { background-color: #FFEB3B !important; color: #000 !important; font-weight: bold; } /* Amarelo Puro */
+        .bg-limp_call  { background-color: #FFC107 !important; color: #000 !important; font-weight: bold; } /* Amarelo Ouro */
+        .bg-call_strong { background-color: #FF9800 !important; color: #000 !important; font-weight: bold; } /* Laranja */
+
+        /* 3. Raises & Agressão (AZUIS/ROXOS) */
+        .bg-raise_ai   { background-color: #2979FF !important; color: #FFF !important; font-weight: bold; } /* Azul Royal */
+        .bg-raise_call { background-color: #00E5FF !important; color: #000 !important; font-weight: bold; } /* Ciano */
+        .bg-raise_fold { background-color: #B03A2E !important; color: #FFF !important; font-weight: bold; } /* Vermelho */
+        .bg-raise_spec { background-color: #8E44AD !important; color: #FFF !important; font-weight: bold; } /* Roxo */
+
+        /* 4. Especiais */
+        .bg-trap       { background-color: #827717 !important; color: #FFF !important; font-weight: bold; } /* Olive */
+        .bg-sizes      { background-color: #FF4081 !important; color: #FFF !important; font-weight: bold; } /* Rosa */
+        
+        /* 5. NOVAS CORES (HU / NASH) */
+        .bg-salmon     { background-color: #FF8A80 !important; color: #000 !important; font-weight: bold; } /* Salmão */
+        .bg-grey       { background-color: #BDBDBD !important; color: #000 !important; font-weight: bold; } /* Cinza */
+        .bg-white      { background-color: #FFFFFF !important; color: #000 !important; font-weight: bold; } /* Branco */
+        
+        .bg-fold { background-color: #151515 !important; color: #666 !important; }
+
+    </style>
+</head>
+<body>
+
+    <h1 style="color:#666; margin-top:0; font-size: 1.2rem;">Range Painter (Team Edition)</h1>
+
+    <div class="controls-container">
+        
+        <div class="group-label">Shoves & Traps</div>
+        <div class="palette-row">
+            <div class="color-btn bg-open_shove active" onclick="setColor('open_shove')" title="Verde (All-in)"></div>
+            <div class="color-btn bg-trap" onclick="setColor('trap')" title="Olive (Trap)"></div>
+            <div class="divider"></div>
+            <div class="color-btn bg-sizes" onclick="setColor('sizes')" title="Rosa (Sizes)"></div>
+        </div>
+
+        <div class="group-label">Raises (MR / ISO / 3-Bet)</div>
+        <div class="palette-row">
+            <div class="color-btn bg-raise_ai" onclick="setColor('raise_ai')" title="Azul Royal (Forte)"></div>
+            <div class="color-btn bg-raise_call" onclick="setColor('raise_call')" title="Ciano (Médio)"></div>
+            <div class="color-btn bg-raise_spec" onclick="setColor('raise_spec')" title="Roxo (Misto)"></div>
+            <div class="color-btn bg-raise_fold" onclick="setColor('raise_fold')" title="Vermelho (Fold)"></div>
+        </div>
+
+        <div class="group-label">Calls & Checks</div>
+        <div class="palette-row">
+            <div class="color-btn bg-call_strong" onclick="setColor('call_strong')" title="Laranja (Call Forte)"></div>
+            <div class="color-btn bg-limp_call" onclick="setColor('limp_call')" title="Ouro (Passivo)"></div>
+            <div class="color-btn bg-check_weak" onclick="setColor('check_weak')" title="Amarelo (Fraco)"></div>
+            <div class="divider"></div>
+            <div class="color-btn bg-fold" onclick="setColor('fold')" title="Borracha"></div>
+        </div>
+
+        <div class="group-label">HU & Nash (Especiais)</div>
+        <div class="palette-row">
+            <div class="color-btn bg-salmon" onclick="setColor('salmon')" title="Salmão (MR/Fold)"></div>
+            <div class="color-btn bg-grey" onclick="setColor('grey')" title="Cinza (Limp/Call/Call)"></div>
+            <div class="color-btn bg-white" onclick="setColor('white')" title="Branco (Nash Fold)"></div>
+        </div>
+
+        <div class="palette-row" style="margin-top: 15px;">
+            <button class="action-btn" onclick="clearGrid()">LIMPAR</button>
+            <button class="action-btn download-btn" onclick="downloadHighResImage()">📸 SALVAR IMG (HD)</button>
+        </div>
+    </div>
+
+    <div class="grid" id="pokerGrid"></div>
+
+    <script>
+        const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+        let activeColor = 'open_shove'; 
+        let isMouseDown = false;
+
+        // Lista de classes para limpeza (Incluindo as novas)
+        const allActionClasses = [
+            'bg-open_shove', 'bg-check_weak', 'bg-limp_call', 'bg-call_strong',
+            'bg-raise_ai', 'bg-raise_call', 'bg-raise_fold', 'bg-raise_spec',
+            'bg-trap', 'bg-sizes', 'bg-fold',
+            'bg-salmon', 'bg-grey', 'bg-white' // Novas cores adicionadas
+        ];
+
+        const grid = document.getElementById('pokerGrid');
+
+        // Geração da Grade
+        for (let r1 = 0; r1 < 13; r1++) {
+            for (let r2 = 0; r2 < 13; r2++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                let handName = '';
+                if (r1 < r2) { handName = ranks[r1] + ranks[r2] + 's'; } 
+                else if (r1 > r2) { handName = ranks[r2] + ranks[r1] + 'o'; } 
+                else { handName = ranks[r1] + ranks[r2]; }
+                
+                cell.innerText = handName;
+                
+                cell.addEventListener('mousedown', (e) => { 
+                    e.preventDefault(); 
+                    isMouseDown = true; 
+                    paint(cell); 
+                });
+                
+                cell.addEventListener('mouseenter', () => { 
+                    if(isMouseDown) paint(cell); 
+                });
+                
+                cell.addEventListener('mouseup', () => { isMouseDown = false; });
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        window.addEventListener('mouseup', () => { isMouseDown = false; });
+
+        function setColor(type) {
+            activeColor = type;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`.controls-container .bg-${type}`);
+            if(btn) btn.classList.add('active');
+        }
+
+        function paint(element) {
+            element.classList.remove(...allActionClasses);
+            if (activeColor !== 'fold') {
+                element.classList.add(`bg-${activeColor}`);
+            }
+        }
+
+        function clearGrid() {
+            if(confirm('Limpar o range atual?')) {
+                document.querySelectorAll('.cell').forEach(c => {
+                    c.classList.remove(...allActionClasses);
+                });
+            }
+        }
+
+        // --- NOVA FUNÇÃO DE DOWNLOAD HD ---
+        function downloadHighResImage() {
+            const element = document.getElementById('pokerGrid');
+            const btn = document.querySelector('.download-btn');
+            const originalText = btn.innerText;
+
+            // Feedback visual
+            btn.innerText = "⏳ Gerando...";
+            btn.style.opacity = "0.7";
+
+            html2canvas(element, {
+                scale: 4, // Escala 4x para ultra resolução (High DPI)
+                backgroundColor: "#000000", // Garante fundo preto
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                // Cria o link de download
+                const link = document.createElement('a');
+                link.download = 'spin-pilot-range.png';
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+
+                // Restaura o botão
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+            }).catch(err => {
+                console.error("Erro ao gerar imagem:", err);
+                alert("Erro ao gerar imagem. Tente novamente.");
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+            });
+        }
+    </script>
+</body>
+</html>
