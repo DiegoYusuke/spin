@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Range Painter - Spin Pilot (Team Standard)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        body { 
-            background-color: #0a0a0a; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
-            user-select: none; 
+        body {
+            background-color: #0a0a0a;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            user-select: none;
         }
-        
+
         /* CONTROLES E PALETA */
         .controls-container {
             background: #1e1e1e;
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             margin-bottom: 20px;
             display: flex;
             flex-direction: column;
@@ -37,26 +38,36 @@
             flex-wrap: wrap;
         }
 
-        .divider { width: 1px; height: 30px; background: #444; margin: 0 5px; }
+        .divider {
+            width: 1px;
+            height: 30px;
+            background: #444;
+            margin: 0 5px;
+        }
 
-        .color-btn { 
-            width: 42px; 
-            height: 42px; 
-            border: 2px solid #333; 
-            cursor: pointer; 
-            border-radius: 6px; 
-            transition: transform 0.1s, box-shadow 0.2s; 
+        .color-btn {
+            width: 42px;
+            height: 42px;
+            border: 2px solid #333;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: transform 0.1s, box-shadow 0.2s;
             position: relative;
         }
-        
-        .color-btn:hover { transform: scale(1.1); border-color: #777; z-index: 2; }
-        .color-btn.active { 
-            border-color: white; 
-            transform: scale(1.15); 
-            box-shadow: 0 0 12px rgba(255,255,255,0.4); 
-            z-index: 10; 
+
+        .color-btn:hover {
+            transform: scale(1.1);
+            border-color: #777;
+            z-index: 2;
         }
-        
+
+        .color-btn.active {
+            border-color: white;
+            transform: scale(1.15);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+            z-index: 10;
+        }
+
         /* Labels de Grupo */
         .group-label {
             font-size: 11px;
@@ -69,71 +80,180 @@
             width: 100%;
         }
 
-        .action-btn { padding: 8px 15px; background: #333; color: white; border: 1px solid #444; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
-        .action-btn:hover { background: #555; }
-        .action-btn:active { background: #222; }
-        
+        .action-btn {
+            padding: 8px 15px;
+            background: #333;
+            color: white;
+            border: 1px solid #444;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .action-btn:hover {
+            background: #555;
+        }
+
+        .action-btn:active {
+            background: #222;
+        }
+
         /* Botão de Download Destaque */
-        .download-btn { background: #2979FF; border-color: #2979FF; }
-        .download-btn:hover { background: #448AFF; }
+        .download-btn {
+            background: #2979FF;
+            border-color: #2979FF;
+        }
+
+        .download-btn:hover {
+            background: #448AFF;
+        }
 
         /* A GRADE */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(13, 1fr); 
-            gap: 2px; 
-            background: #000; 
-            border: 4px solid #333; 
-            padding: 4px; 
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            gap: 2px;
+            background: #000;
+            border: 4px solid #333;
+            padding: 4px;
             border-radius: 4px;
         }
 
         .cell {
-            width: 45px; height: 45px; 
-            display: flex; justify-content: center; align-items: center;
-            font-size: 13px; font-weight: 500; color: #666; 
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
             cursor: crosshair;
-            background-color: #151515; 
-            transition: background 0.05s; 
+            background-color: #151515;
+            transition: background 0.05s;
         }
-        
-        .cell:hover { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3); }
+
+        .cell:hover {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
 
         /* --- PALETA DE CORES DEFINITIVA (Team Culture) --- */
-        
+
         /* 1. Shoves (VERDE) */
-        .bg-open_shove { background-color: #00E676 !important; color: #003300 !important; font-weight: bold; } /* Verde Neon */
-        
+        .bg-open_shove {
+            background-color: #00E676 !important;
+            color: #003300 !important;
+            font-weight: bold;
+        }
+
+        /* Verde Neon */
+
         /* 2. Passivo / Calls (AMARELOS) */
-        .bg-check_weak { background-color: #FFEB3B !important; color: #000 !important; font-weight: bold; } /* Amarelo Puro */
-        .bg-limp_call  { background-color: #FFC107 !important; color: #000 !important; font-weight: bold; } /* Amarelo Ouro */
-        .bg-call_strong { background-color: #FF9800 !important; color: #000 !important; font-weight: bold; } /* Laranja */
+        .bg-check_weak {
+            background-color: #FFEB3B !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Amarelo Puro */
+        .bg-limp_call {
+            background-color: #FFC107 !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Amarelo Ouro */
+        .bg-call_strong {
+            background-color: #FF9800 !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Laranja */
 
         /* 3. Raises & Agressão (AZUIS/ROXOS) */
-        .bg-raise_ai   { background-color: #2979FF !important; color: #FFF !important; font-weight: bold; } /* Azul Royal */
-        .bg-raise_call { background-color: #00E5FF !important; color: #000 !important; font-weight: bold; } /* Ciano */
-        .bg-raise_fold { background-color: #B03A2E !important; color: #FFF !important; font-weight: bold; } /* Vermelho */
-        .bg-raise_spec { background-color: #8E44AD !important; color: #FFF !important; font-weight: bold; } /* Roxo */
+        .bg-raise_ai {
+            background-color: #2979FF !important;
+            color: #FFF !important;
+            font-weight: bold;
+        }
+
+        /* Azul Royal */
+        .bg-raise_call {
+            background-color: #00E5FF !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Ciano */
+        .bg-raise_fold {
+            background-color: #B03A2E !important;
+            color: #FFF !important;
+            font-weight: bold;
+        }
+
+        /* Vermelho */
+        .bg-raise_spec {
+            background-color: #8E44AD !important;
+            color: #FFF !important;
+            font-weight: bold;
+        }
+
+        /* Roxo */
 
         /* 4. Especiais */
-        .bg-trap       { background-color: #827717 !important; color: #FFF !important; font-weight: bold; } /* Olive */
-        .bg-sizes      { background-color: #FF4081 !important; color: #FFF !important; font-weight: bold; } /* Rosa */
-        
-        /* 5. NOVAS CORES (HU / NASH) */
-        .bg-salmon     { background-color: #FF8A80 !important; color: #000 !important; font-weight: bold; } /* Salmão */
-        .bg-grey       { background-color: #BDBDBD !important; color: #000 !important; font-weight: bold; } /* Cinza */
-        .bg-white      { background-color: #FFFFFF !important; color: #000 !important; font-weight: bold; } /* Branco */
-        
-        .bg-fold { background-color: #151515 !important; color: #666 !important; }
+        .bg-trap {
+            background-color: #827717 !important;
+            color: #FFF !important;
+            font-weight: bold;
+        }
 
+        /* Olive */
+        .bg-sizes {
+            background-color: #FF4081 !important;
+            color: #FFF !important;
+            font-weight: bold;
+        }
+
+        /* Rosa */
+
+        /* 5. NOVAS CORES (HU / NASH) */
+        .bg-salmon {
+            background-color: #FF8A80 !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Salmão */
+        .bg-grey {
+            background-color: #BDBDBD !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Cinza */
+        .bg-white {
+            background-color: #FFFFFF !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        /* Branco */
+
+        .bg-fold {
+            background-color: #151515 !important;
+            color: #666 !important;
+        }
     </style>
 </head>
+
 <body>
 
     <h1 style="color:#666; margin-top:0; font-size: 1.2rem;">Range Painter (Team Edition)</h1>
 
     <div class="controls-container">
-        
+
         <div class="group-label">Shoves & Traps</div>
         <div class="palette-row">
             <div class="color-btn bg-open_shove active" onclick="setColor('open_shove')" title="Verde (All-in)"></div>
@@ -170,13 +290,47 @@
             <button class="action-btn" onclick="clearGrid()">LIMPAR</button>
             <button class="action-btn download-btn" onclick="downloadHighResImage()">📸 SALVAR IMG (HD)</button>
         </div>
+
+        <div class="divider" style="width: 100%; height: 1px; background: #333; margin: 10px 0;"></div>
+
+        <!-- STRATEGY MIXER UI -->
+        <div class="group-label">Strategy Mixer (Gradient)</div>
+        <div class="palette-row" style="gap: 15px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <small style="color:#666; font-size:10px; margin-bottom:4px;">COR PRINCIPAL</small>
+                <div id="mix-color-1" class="color-btn bg-open_shove" style="cursor:default; border-color:white;"></div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:center; width: 120px;">
+                <input type="range" id="mix-slider" min="0" max="100" value="50" oninput="updateMixPreview()"
+                    style="width:100%">
+                <small id="mix-label" style="color:#aaa; font-size:10px; margin-top:4px;">50% / 50%</small>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <small style="color:#666; font-size:10px; margin-bottom:4px;">COR SECUNDÁRIA</small>
+                <div id="mix-color-2" class="color-btn bg-check_weak" onclick="toggleMixSelection()"
+                    style="cursor:pointer;" title="Clique para trocar"></div>
+            </div>
+
+            <button class="action-btn" id="btn-apply-mix" onclick="activateMix()"
+                style="height: 42px; border: 1px dashed #666;">USAR MIX</button>
+        </div>
     </div>
 
     <div class="grid" id="pokerGrid"></div>
 
     <script>
-        const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
-        let activeColor = 'open_shove'; 
+        const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+        // Estado da Aplicação
+        let activeColor = 'open_shove';     // Cor sólida ativa
+        let activeMix = null;               // Objeto de Mix ativo (se não nulo, usa gradient)
+
+        let mixColor1 = 'open_shove';
+        let mixColor2 = 'check_weak';
+        let selectingSecondary = false;
+
         let isMouseDown = false;
 
         // Lista de classes para limpeza (Incluindo as novas)
@@ -194,26 +348,26 @@
             for (let r2 = 0; r2 < 13; r2++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                
+
                 let handName = '';
-                if (r1 < r2) { handName = ranks[r1] + ranks[r2] + 's'; } 
-                else if (r1 > r2) { handName = ranks[r2] + ranks[r1] + 'o'; } 
+                if (r1 < r2) { handName = ranks[r1] + ranks[r2] + 's'; }
+                else if (r1 > r2) { handName = ranks[r2] + ranks[r1] + 'o'; }
                 else { handName = ranks[r1] + ranks[r2]; }
-                
+
                 cell.innerText = handName;
-                
-                cell.addEventListener('mousedown', (e) => { 
-                    e.preventDefault(); 
-                    isMouseDown = true; 
-                    paint(cell); 
+
+                cell.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    isMouseDown = true;
+                    paint(cell);
                 });
-                
-                cell.addEventListener('mouseenter', () => { 
-                    if(isMouseDown) paint(cell); 
+
+                cell.addEventListener('mouseenter', () => {
+                    if (isMouseDown) paint(cell);
                 });
-                
+
                 cell.addEventListener('mouseup', () => { isMouseDown = false; });
-                
+
                 grid.appendChild(cell);
             }
         }
@@ -221,23 +375,109 @@
         window.addEventListener('mouseup', () => { isMouseDown = false; });
 
         function setColor(type) {
+            // Se estivermos no modo de seleção de cor secundária para o Mixer
+            if (selectingSecondary) {
+                mixColor2 = type;
+                selectingSecondary = false;
+                document.getElementById('mix-color-2').className = `color-btn bg-${type}`;
+                document.getElementById('mix-color-2').style.borderColor = '#333';
+                updateMixPreview();
+                return;
+            }
+
+            // Seleção Normal (Cor Principal)
             activeColor = type;
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.querySelector(`.controls-container .bg-${type}`);
-            if(btn) btn.classList.add('active');
+            activeMix = null; // Reseta o mix, volta para cor sólida
+
+            // Atualiza UI principal
+            document.querySelectorAll('.controls-container > .palette-row .color-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`.controls-container > .palette-row .bg-${type}`);
+            if (btn) btn.classList.add('active');
+
+            // Atualiza UI do Mixer (Cor 1 segue a seleção principal)
+            mixColor1 = type;
+            document.getElementById('mix-color-1').className = `color-btn bg-${type}`;
+
+            // Desativa visualmente o botão de mix
+            document.getElementById('btn-apply-mix').style.borderColor = '#666';
+            document.getElementById('btn-apply-mix').classList.remove('active');
+
+            updateMixPreview();
+        }
+
+        // --- LÓGICA DO MIXER ---
+
+        function toggleMixSelection() {
+            selectingSecondary = true;
+            alert("Selecione agora uma cor na paleta acima para ser a SECUNDÁRIA.");
+            document.getElementById('mix-color-2').style.borderColor = 'white';
+        }
+
+        function updateMixPreview() {
+            const pct = document.getElementById('mix-slider').value;
+            document.getElementById('mix-label').innerText = `${pct}% / ${100 - pct}%`;
+
+            // Gerar o gradient de preview no botão "USAR MIX"
+            const c1 = getComputedStyle(document.querySelector(`.bg-${mixColor1}`)).backgroundColor;
+            const c2 = getComputedStyle(document.querySelector(`.bg-${mixColor2}`)).backgroundColor;
+
+            const btn = document.getElementById('btn-apply-mix');
+            btn.style.background = `linear-gradient(to bottom, ${c1} ${pct}%, ${c2} ${pct}%)`;
+
+            // Se o mix estiver ativo, atualiza o activeMix em tempo real
+            if (activeMix) {
+                activeMix = { c1: mixColor1, c2: mixColor2, pct: pct };
+            }
+        }
+
+        function activateMix() {
+            activeMix = { c1: mixColor1, c2: mixColor2, pct: document.getElementById('mix-slider').value };
+
+            // Tira seleção das cores sólidas
+            document.querySelectorAll('.controls-container > .palette-row .color-btn').forEach(b => b.classList.remove('active'));
+
+            // Ativa visualmente o botão de Mix
+            const btn = document.getElementById('btn-apply-mix');
+            btn.style.borderColor = 'white';
+            btn.classList.add('active'); // Para brilho se tiver CSS
         }
 
         function paint(element) {
+            // Remove classes antigas
             element.classList.remove(...allActionClasses);
-            if (activeColor !== 'fold') {
-                element.classList.add(`bg-${activeColor}`);
+
+            // Limpa style inline (remove gradient antigo)
+            element.style.background = '';
+
+            if (activeMix) {
+                // PINTURA COM GRADIENT (MIXED STRATEGY)
+                // Precisamos pegar as cores reais das classes
+                // Pequeno hack: criamos elementos temporários ou usamos os botões da UI para pegar a cor computada
+                // Mas como já temos os botões na UI, vamos pegar deles.
+                const c1El = document.querySelector(`.bg-${activeMix.c1}`);
+                const c2El = document.querySelector(`.bg-${activeMix.c2}`);
+
+                if (c1El && c2El) {
+                    const color1 = getComputedStyle(c1El).backgroundColor;
+                    const color2 = getComputedStyle(c2El).backgroundColor;
+                    const percent = activeMix.pct;
+
+                    // Gradiente Vertical (Padrão Team Edition para ranges mistos)
+                    element.style.background = `linear-gradient(to bottom, ${color1} ${percent}%, ${color2} ${percent}%)`;
+                }
+            } else {
+                // PINTURA SÓLIDA
+                if (activeColor !== 'fold') {
+                    element.classList.add(`bg-${activeColor}`);
+                }
             }
         }
 
         function clearGrid() {
-            if(confirm('Limpar o range atual?')) {
+            if (confirm('Limpar o range atual?')) {
                 document.querySelectorAll('.cell').forEach(c => {
                     c.classList.remove(...allActionClasses);
+                    c.style.background = ''; // Remove gradients inline
                 });
             }
         }
@@ -276,4 +516,5 @@
         }
     </script>
 </body>
+
 </html>
