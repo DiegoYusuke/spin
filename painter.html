@@ -288,6 +288,7 @@
 
         <div class="palette-row" style="margin-top: 15px;">
             <button class="action-btn" onclick="clearGrid()">LIMPAR</button>
+            <button class="action-btn" onclick="exportJSON()">💾 JSON</button>
             <button class="action-btn download-btn" onclick="downloadHighResImage()">📸 SALVAR IMG (HD)</button>
         </div>
 
@@ -464,11 +465,23 @@
 
                     // Gradiente Vertical (Padrão Team Edition para ranges mistos)
                     element.style.background = `linear-gradient(to bottom, ${color1} ${percent}%, ${color2} ${percent}%)`;
+
+                    // Salva metadata para exportação JSON
+                    element.dataset.mix = JSON.stringify({
+                        primary: activeMix.c1,
+                        freq: activeMix.pct,
+                        secondary: activeMix.c2,
+                        freq2: 100 - activeMix.pct
+                    });
                 }
             } else {
                 // PINTURA SÓLIDA
                 if (activeColor !== 'fold') {
                     element.classList.add(`bg-${activeColor}`);
+                    // Limpa metadata de mix se houver
+                    delete element.dataset.mix;
+                } else {
+                    delete element.dataset.mix;
                 }
             }
         }
@@ -513,6 +526,50 @@
                 btn.innerText = originalText;
                 btn.style.opacity = "1";
             });
+        }
+
+        // --- EXPORTAR PARA JSON ---
+        function exportJSON() {
+            const rangeData = {};
+            const cells = document.querySelectorAll('.cell');
+
+            cells.forEach(cell => {
+                const hand = cell.innerText;
+                let data = null;
+
+                // Detecta gradiente (Mixed Strategy)
+                if (cell.style.background.includes('linear-gradient')) {
+                    if (cell.dataset.mix) {
+                        data = JSON.parse(cell.dataset.mix);
+                    }
+                }
+                // Detecta cor solida
+                else {
+                    const classes = [...cell.classList];
+                    const actionClass = classes.find(c => c.startsWith('bg-') && c !== 'bg-fold');
+                    if (actionClass) {
+                        data = {
+                            primary: actionClass.replace('bg-', ''),
+                            freq: 100
+                        };
+                    }
+                }
+
+                if (data) {
+                    rangeData[hand] = data;
+                }
+            });
+
+            console.log(JSON.stringify(rangeData, null, 2));
+
+            // Download do arquivo
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rangeData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "range_export.json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         }
     </script>
 </body>
